@@ -3,7 +3,7 @@ import sbt.url
 import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, commitNextVersion, commitReleaseVersion, inquireVersions, pushChanges, runClean, runTest, setNextVersion, setReleaseVersion, tagRelease}
 
 lazy val supportedScalaVersions = List("2.13.0", "2.12.8")
-ThisBuild / version          := "0.0.1"
+ThisBuild / version := (version in ThisBuild).value
 ThisBuild / organization     := "uk.gov.nationalarchives"
 ThisBuild / organizationName := "National Archives"
 
