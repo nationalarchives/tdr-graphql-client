@@ -12,6 +12,7 @@ import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
 import sttp.client.circe._
 import sttp.client.{Response, ResponseError, basicRequest, _}
 import sttp.model.{MediaType, Uri}
+import uk.gov.nationalarchives.tdr.GraphQLClient.GraphqlError
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -21,10 +22,6 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
   implicit val backend: SttpBackend[Future, Nothing, WebSocketHandler] = AsyncHttpClientFutureBackend()
 
   implicit val customConfig: Configuration = Configuration.default.withDefaults
-
-  case class GraphqlError(message: String, path: List[String], locations: List[Locations])
-
-  case class Locations(column: Int, line: Int)
 
   case class GraphqlData(data: Option[Data], errors: List[GraphqlError] = Nil)
 
@@ -46,8 +43,16 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
     response.map(r => {
       r.body match {
         case Right(r) => r
-        case Left(e) => throw e
+        case Left(e) => GraphqlData(Option.empty, List(GraphqlError(e.body, List(), List())))
       }
     })
   }
+}
+
+object GraphQLClient {
+
+  case class GraphqlError(message: String, path: List[String], locations: List[Locations])
+
+  case class Locations(column: Int, line: Int)
+
 }
