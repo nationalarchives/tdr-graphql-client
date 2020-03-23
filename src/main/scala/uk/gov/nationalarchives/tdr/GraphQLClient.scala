@@ -11,8 +11,9 @@ import sttp.client.asynchttpclient.WebSocketHandler
 import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
 import sttp.client.circe._
 import sttp.client.{Response, ResponseError, basicRequest, _}
-import sttp.model.{MediaType, Uri}
+import sttp.model.{MediaType, StatusCode}
 import uk.gov.nationalarchives.tdr.GraphQLClient.GraphqlError
+import uk.gov.nationalarchives.tdr.error.{HttpException, NotAuthenticatedException}
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,10 +41,16 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
         .contentType(MediaType.ApplicationJson)
         .response(asJson[GraphqlData]).send()
 
-    response.map(r => {
-      r.body match {
-        case Right(r) => r
-        case Left(e) => GraphqlData(Option.empty, List(GraphqlError(e.body, List(), List())))
+    response.flatMap(r => {
+      r.code match {
+        case StatusCode.Ok => {
+          Future.successful(r.body.right.get)
+        }
+        case _ => {
+          val stringBody = r.body.left.get.body
+          val exception = new HttpException(r.copy(body = stringBody))
+          Future.failed(exception)
+        }
       }
     })
   }
