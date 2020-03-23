@@ -11,8 +11,8 @@ import io.circe.syntax._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import uk.gov.nationalarchives.tdr.testdata.AddFileTestDocument.addFile.{AddFileInput, AddFileVariables, FileResponseData, addFileDocument}
 import uk.gov.nationalarchives.tdr.GraphQLClient.GraphqlError
+import uk.gov.nationalarchives.tdr.testdata.AddFileTestDocument.addFile.{AddFileInput, AddFileVariables, FileResponseData, addFileDocument}
 import uk.gov.nationalarchives.tdr.testdata.GetSeriesTestDocument.getSeries.{GetSeries, GetSeriesVariables, SeriesResponseData, getSeriesDocument}
 
 import scala.concurrent.duration.Duration
@@ -22,6 +22,10 @@ class GraphQLClientTest extends AnyFlatSpec with Matchers with BeforeAndAfterEac
   val wiremockServer = new WireMockServer(9006)
 
   implicit val ec: ExecutionContext = ExecutionContext.global
+
+  def graphQlUrl: String = wiremockServer.url("/graphql")
+  def getSeriesClient = new GraphQLClient[SeriesResponseData, GetSeriesVariables](graphQlUrl)
+  def addFileClient = new GraphQLClient[FileResponseData, AddFileVariables](graphQlUrl)
 
   override def beforeEach(): Unit = {
     wiremockServer.start()
@@ -42,7 +46,7 @@ class GraphQLClientTest extends AnyFlatSpec with Matchers with BeforeAndAfterEac
     wiremockServer.stubFor(post(urlEqualTo("/graphql"))
       .willReturn(okJson(dataString)))
 
-    val result = new GraphQLClient[SeriesResponseData, GetSeriesVariables]("http://localhost:9006/graphql").getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
+    val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
     val resultData: GraphQLClient[SeriesResponseData, GetSeriesVariables]#GraphqlData = Await.result(result, Duration(1, TimeUnit.HOURS))
     assert(resultData.data.isDefined)
     assert(resultData.data.get.getSeries.nonEmpty)
@@ -57,7 +61,7 @@ class GraphQLClientTest extends AnyFlatSpec with Matchers with BeforeAndAfterEac
     wiremockServer.stubFor(post(urlEqualTo("/graphql"))
       .willReturn(okJson(dataString)))
 
-    val result = new GraphQLClient[SeriesResponseData, GetSeriesVariables]("http://localhost:9006/graphql").getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
+    val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
     val resultData: GraphQLClient[SeriesResponseData, GetSeriesVariables]#GraphqlData = Await.result(result, Duration(1, TimeUnit.HOURS))
     assert(resultData.data.isEmpty)
     assert(resultData.errors.nonEmpty)
@@ -67,7 +71,7 @@ class GraphQLClientTest extends AnyFlatSpec with Matchers with BeforeAndAfterEac
   "The getResult method " should "return an appropriate error if the api returns an error" in {
     wiremockServer.stubFor(post(urlEqualTo("/graphql"))
       .willReturn(unauthorized().withBody("Unauthorised")))
-    val result = new GraphQLClient[SeriesResponseData, GetSeriesVariables]("http://localhost:9006/graphql").getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
+    val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
     val resultData: GraphQLClient[SeriesResponseData, GetSeriesVariables]#GraphqlData = Await.result(result, Duration(1, TimeUnit.HOURS))
     assert(resultData.data.isEmpty)
     assert(resultData.errors.nonEmpty)
@@ -77,7 +81,7 @@ class GraphQLClientTest extends AnyFlatSpec with Matchers with BeforeAndAfterEac
   "The getResult method " should "return no data if the api response is invalid" in {
     wiremockServer.stubFor(post(urlEqualTo("/graphql"))
       .willReturn(okJson("{\"status\": \"ok\"}")))
-    val result = new GraphQLClient[SeriesResponseData, GetSeriesVariables]("http://localhost:9006/graphql").getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
+    val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
     val resultData: GraphQLClient[SeriesResponseData, GetSeriesVariables]#GraphqlData = Await.result(result, Duration(1, TimeUnit.HOURS))
     assert(resultData.data.isEmpty)
     assert(resultData.errors.isEmpty)
@@ -89,7 +93,7 @@ class GraphQLClientTest extends AnyFlatSpec with Matchers with BeforeAndAfterEac
 
     val variables = AddFileVariables(AddFileInput(123, Some("some file name")))
 
-    val result = new GraphQLClient[FileResponseData, AddFileVariables]("http://localhost:9006/graphql")
+    val result = addFileClient
       .getResult(new BearerAccessToken("token"), addFileDocument, Some(variables))
     Await.result(result, Duration(1, TimeUnit.HOURS))
 
@@ -103,7 +107,7 @@ class GraphQLClientTest extends AnyFlatSpec with Matchers with BeforeAndAfterEac
 
     val variables = AddFileVariables(AddFileInput(123, None))
 
-    val result = new GraphQLClient[FileResponseData, AddFileVariables]("http://localhost:9006/graphql")
+    val result = addFileClient
       .getResult(new BearerAccessToken("token"), addFileDocument, Some(variables))
     Await.result(result, Duration(1, TimeUnit.HOURS))
 
