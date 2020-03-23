@@ -4,7 +4,7 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.auto._
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, Error, Json}
+import io.circe.{Decoder, Encoder, Error, Json, Printer}
 import sangria.ast.Document
 import sangria.renderer.QueryRenderer
 import sttp.client.asynchttpclient.WebSocketHandler
@@ -30,7 +30,7 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
     val variablesJson: Option[Json] = variables.map(_.asJson)
     val fields: immutable.Seq[(String, Json)] = List("query" -> queryJson) ++ variablesJson.map("variables" -> _)
 
-    val body = Json.obj(fields: _*).noSpaces
+    val body = Json.obj(fields: _*).printWith(GraphQLClient.jsonPrinter)
 
     val response: Future[Response[Either[ResponseError[Error], GraphqlData]]] =
       basicRequest
@@ -55,4 +55,9 @@ object GraphQLClient {
 
   case class Locations(column: Int, line: Int)
 
+  val jsonPrinter: Printer = Printer
+    .noSpaces
+    // If any optional values are set to None, ignore them rather than setting them to null. This makes it possible to
+    // remove deprecated optional parameters from the API without breaking the clients.
+    .copy(dropNullValues = true)
 }
