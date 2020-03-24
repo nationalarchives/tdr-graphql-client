@@ -5,7 +5,7 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.matchers.should.Matchers
 import sttp.model.StatusCode
-import uk.gov.nationalarchives.tdr.error.HttpException
+import uk.gov.nationalarchives.tdr.error.{HttpException, ResponseDecodingException}
 import uk.gov.nationalarchives.tdr.testdata.AddFileTestDocument.addFile.addFileDocument
 import uk.gov.nationalarchives.tdr.testdata.GetSeriesTestDocument.getSeries.{GetSeriesVariables, SeriesResponseData}
 
@@ -53,5 +53,18 @@ class ErrorHandlingTest extends WireMockTest with Matchers {
     val responseException = errorResponse.asInstanceOf[HttpException]
     responseException.code should equal(StatusCode.TooManyRequests)
     responseException.body should equal("some arbitrary response body")
+  }
+
+  "a 200 response with invalid JSON" should "cause a deserialisation error" in {
+    wiremockServer.stubFor(post(urlEqualTo(graphQlPath))
+      .willReturn(ok.withBody("this is not valid JSON")))
+
+    val result = getSeriesClient.getResult(new BearerAccessToken("token"), addFileDocument, None)
+
+    val errorResponse = result.failed.futureValue
+    errorResponse shouldBe a[ResponseDecodingException]
+
+    val responseException = errorResponse.asInstanceOf[ResponseDecodingException]
+    responseException.getMessage should include("this is not valid JSON")
   }
 }

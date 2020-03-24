@@ -1,19 +1,19 @@
 package uk.gov.nationalarchives.tdr
 
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
+import io.circe._
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.auto._
+import io.circe.parser._
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, Error, Json, Printer}
 import sangria.ast.Document
 import sangria.renderer.QueryRenderer
 import sttp.client.asynchttpclient.WebSocketHandler
 import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
-import sttp.client.circe._
-import sttp.client.{Response, ResponseError, basicRequest, _}
-import sttp.model.{MediaType, StatusCode}
+import sttp.client.{Response, basicRequest, _}
+import sttp.model.MediaType
 import uk.gov.nationalarchives.tdr.GraphQLClient.GraphqlError
-import uk.gov.nationalarchives.tdr.error.{HttpException, NotAuthenticatedException}
+import uk.gov.nationalarchives.tdr.error.{HttpException, ResponseDecodingException}
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,26 +33,29 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
 
     val body = Json.obj(fields: _*).printWith(GraphQLClient.jsonPrinter)
 
-    val response: Future[Response[Either[ResponseError[Error], GraphqlData]]] =
+    val response: Future[Response[Either[String, String]]] =
       basicRequest
         .post(uri"$url")
         .auth.bearer(token.getValue)
         .body(body)
         .contentType(MediaType.ApplicationJson)
-        .response(asJson[GraphqlData]).send()
+        .response(asString)
+        .send()
 
     response.flatMap(r => {
-      r.code match {
-        case StatusCode.Ok => {
-          Future.successful(r.body.right.get)
-        }
-        case _ => {
-          val stringBody = r.body.left.get.body
-          val exception = new HttpException(r.copy(body = stringBody))
-          Future.failed(exception)
-        }
+      r.body match {
+        case Right(body) => parseBody(body)
+        case Left(_) => Future.failed(new HttpException(r))
       }
     })
+  }
+
+  private def parseBody(body: String): Future[GraphqlData] = {
+    val parsedBody = parse(body).flatMap(json => json.as[GraphqlData])
+    parsedBody match {
+      case Left(decodingFailure) => Future.failed(new ResponseDecodingException(body, decodingFailure))
+      case Right(graphQlResponse) => Future.successful(graphQlResponse)
+    }
   }
 }
 

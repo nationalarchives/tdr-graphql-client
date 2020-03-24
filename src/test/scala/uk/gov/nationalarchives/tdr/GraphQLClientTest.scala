@@ -24,7 +24,7 @@ class GraphQLClientTest extends WireMockTest with Matchers {
   case class GraphqlData(data: Option[SeriesResponseData], errors: List[GraphqlError] = Nil)
 
   "The getResult method " should "return the correct result" in {
-    val data= GraphqlData(Some(SeriesResponseData(List(GetSeries(1L, Option.empty,Option.empty, Some("code"), Option.empty)))))
+    val data= GraphqlData(Some(SeriesResponseData(List(GetSeries(1L, Some(2L),Some("foo"), Some("code"), Some("bar"))))))
 
     val dataString: String = data.asJson.printWith(Printer(dropNullValues = false, ""))
 
