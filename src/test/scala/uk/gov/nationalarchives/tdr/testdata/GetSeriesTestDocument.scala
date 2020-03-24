@@ -1,12 +1,12 @@
-package uk.gov.nationalarchives.tdr
+package uk.gov.nationalarchives.tdr.testdata
 
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 import sangria.macros._
 
-object GraphQLTestDocument {
+object GetSeriesTestDocument {
   object getSeries {
-    val document: sangria.ast.Document = graphql"""query getSeries($$body: String) {
+    val getSeriesDocument: sangria.ast.Document = graphql"""query getSeries($$body: String) {
   getSeries(body: $$body) {
     seriesid
     bodyid
@@ -15,10 +15,10 @@ object GraphQLTestDocument {
     description
   }
 }"""
-    case class Variables(body: Option[String])
-    object Variables { implicit val jsonEncoder: Encoder[Variables] = deriveEncoder[Variables] }
-    case class Data(getSeries: List[GetSeries])
-    object Data { implicit val jsonDecoder: Decoder[Data] = deriveDecoder[Data] }
+    case class GetSeriesVariables(body: Option[String])
+    object GetSeriesVariables { implicit val jsonEncoder: Encoder[GetSeriesVariables] = deriveEncoder[GetSeriesVariables] }
+    case class SeriesResponseData(getSeries: List[GetSeries])
+    object SeriesResponseData { implicit val jsonDecoder: Decoder[SeriesResponseData] = deriveDecoder[SeriesResponseData] }
     case class GetSeries(seriesid: Long, bodyid: Option[Long], name: Option[String], code: Option[String], description: Option[String])
     object GetSeries {
       implicit val jsonDecoder: Decoder[GetSeries] = deriveDecoder[GetSeries]
