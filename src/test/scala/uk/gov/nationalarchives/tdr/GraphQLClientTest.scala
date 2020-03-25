@@ -8,7 +8,7 @@ import io.circe.Printer
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.scalatest.matchers.should.Matchers
-import uk.gov.nationalarchives.tdr.GraphQLClient.GraphqlError
+import uk.gov.nationalarchives.tdr.GraphQLClient.Error
 import uk.gov.nationalarchives.tdr.testdata.AddFileTestDocument.addFile.{AddFileInput, AddFileVariables, FileResponseData, addFileDocument}
 import uk.gov.nationalarchives.tdr.testdata.GetSeriesTestDocument.getSeries.{GetSeries, GetSeriesVariables, SeriesResponseData, getSeriesDocument}
 
@@ -21,7 +21,7 @@ class GraphQLClientTest extends WireMockTest with Matchers {
 
   def await[T](result: Awaitable[T]): T = Await.result(result, Duration(5, TimeUnit.SECONDS))
 
-  case class GraphqlData(data: Option[SeriesResponseData], errors: List[GraphqlError] = Nil)
+  case class GraphqlData(data: Option[SeriesResponseData], errors: List[Error] = Nil)
 
   "The getResult method " should "return the correct result" in {
     val data= GraphqlData(Some(SeriesResponseData(List(GetSeries(1L, Some(2L),Some("foo"), Some("code"), Some("bar"))))))
@@ -32,14 +32,14 @@ class GraphQLClientTest extends WireMockTest with Matchers {
       .willReturn(okJson(dataString)))
 
     val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
-    val resultData: GraphQLClient[SeriesResponseData, GetSeriesVariables]#GraphqlData = await(result)
+    val resultData = await(result)
     assert(resultData.data.isDefined)
     assert(resultData.data.get.getSeries.nonEmpty)
     resultData.data.get.getSeries.head.seriesid should equal(1L)
   }
 
   "The getResult method " should "return an error from the api" in {
-    val data= GraphqlData(Option.empty, List(GraphqlError("error", List(), List())))
+    val data= GraphqlData(Option.empty, List(Error("error", List(), List(), None)))
 
     val dataString: String = data.asJson.printWith(Printer(dropNullValues = false, ""))
 
@@ -47,7 +47,7 @@ class GraphQLClientTest extends WireMockTest with Matchers {
       .willReturn(okJson(dataString)))
 
     val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
-    val resultData: GraphQLClient[SeriesResponseData, GetSeriesVariables]#GraphqlData = await(result)
+    val resultData = await(result)
     assert(resultData.data.isEmpty)
     assert(resultData.errors.nonEmpty)
     resultData.errors.head.message should equal("error")
@@ -57,7 +57,7 @@ class GraphQLClientTest extends WireMockTest with Matchers {
     wiremockServer.stubFor(post(urlEqualTo("/graphql"))
       .willReturn(okJson("{\"status\": \"ok\"}")))
     val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
-    val resultData: GraphQLClient[SeriesResponseData, GetSeriesVariables]#GraphqlData = await(result)
+    val resultData = await(result)
     assert(resultData.data.isEmpty)
     assert(resultData.errors.isEmpty)
   }

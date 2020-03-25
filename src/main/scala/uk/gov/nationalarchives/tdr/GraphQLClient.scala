@@ -12,8 +12,8 @@ import sttp.client.asynchttpclient.WebSocketHandler
 import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
 import sttp.client.{Response, basicRequest, _}
 import sttp.model.MediaType
-import uk.gov.nationalarchives.tdr.GraphQLClient.GraphqlError
-import uk.gov.nationalarchives.tdr.error.{HttpException, ResponseDecodingException}
+import uk.gov.nationalarchives.tdr.GraphQLClient.Error
+import uk.gov.nationalarchives.tdr.error.{HttpException, ResponseDecodingException, _}
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,9 +24,9 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
 
   implicit val customConfig: Configuration = Configuration.default.withDefaults
 
-  case class GraphqlData(data: Option[Data], errors: List[GraphqlError] = Nil)
+  case class GraphqlData(data: Option[Data], errors: List[Error] = Nil)
 
-  def getResult(token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty): Future[GraphqlData] = {
+  def getResult(token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty): Future[GraphQlResponse[Data]] = {
     val queryJson: Json = Json.fromString(QueryRenderer.render(document, QueryRenderer.Compact))
     val variablesJson: Option[Json] = variables.map(_.asJson)
     val fields: immutable.Seq[(String, Json)] = List("query" -> queryJson) ++ variablesJson.map("variables" -> _)
@@ -50,20 +50,28 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
     })
   }
 
-  private def parseBody(body: String): Future[GraphqlData] = {
+  private def parseBody(body: String): Future[GraphQlResponse[Data]] = {
     val parsedBody = parse(body).flatMap(json => json.as[GraphqlData])
     parsedBody match {
       case Left(decodingFailure) => Future.failed(new ResponseDecodingException(body, decodingFailure))
-      case Right(graphQlResponse) => Future.successful(graphQlResponse)
+      case Right(graphQlResponseBody) => {
+        val response = GraphQlResponse(
+          graphQlResponseBody.data,
+          graphQlResponseBody.errors.map(e => GraphQlError(e))
+        )
+        Future.successful(response)
+      }
     }
   }
 }
 
 object GraphQLClient {
 
-  case class GraphqlError(message: String, path: List[String], locations: List[Locations])
+  case class Error(message: String, path: List[String], locations: List[Location], extensions: Option[Extensions])
 
-  case class Locations(column: Int, line: Int)
+  case class Location(column: Int, line: Int)
+
+  case class Extensions(code: Option[String])
 
   val jsonPrinter: Printer = Printer
     .noSpaces
@@ -71,3 +79,5 @@ object GraphQLClient {
     // remove deprecated optional parameters from the API without breaking the clients.
     .copy(dropNullValues = true)
 }
+
+case class GraphQlResponse[Data](data: Option[Data], errors: List[GraphQlError])
