@@ -26,33 +26,17 @@ ThisBuild / description := "A simple graphql client which uses auto generated sa
 ThisBuild / licenses := List("MIT" -> new URL("https://choosealicense.com/licenses/mit/"))
 ThisBuild / homepage := Some(url("https://github.com/nationalarchives/tdr-graphql-client"))
 
-// Remove all additional repository other than Maven Central from POM
-ThisBuild / pomIncludeRepository := { _ => false }
-ThisBuild / publishTo := sonatypePublishToBundle.value
-ThisBuild / publishMavenStyle := true
+s3acl := None
+s3sse := true
+ThisBuild / publishMavenStyle := false
 
-useGpgPinentry := true
+ThisBuild / publishTo := {
+  val prefix = if (isSnapshot.value) "snapshots" else "releases"
+  Some(s3resolver.value(s"My ${prefix} S3 bucket", s3(s"$prefix.nationalarchives.gov.uk")))
+}
 
 resolvers +=
   "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
-
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  runTest,
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  releaseStepCommandAndRemaining("+publishSigned"),
-  releaseStepCommand("sonatypeBundleRelease"),
-  setNextVersion,
-  commitNextVersion,
-  pushChanges
-)
-
 
 lazy val root = (project in file("."))
   .settings(
