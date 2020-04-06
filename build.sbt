@@ -25,6 +25,8 @@ ThisBuild / description := "A simple graphql client which uses auto generated sa
 ThisBuild / licenses := List("MIT" -> new URL("https://choosealicense.com/licenses/mit/"))
 ThisBuild / homepage := Some(url("https://github.com/nationalarchives/tdr-graphql-client"))
 
+scalaVersion := "2.13.0"
+
 s3acl := None
 s3sse := true
 ThisBuild / publishMavenStyle := true
