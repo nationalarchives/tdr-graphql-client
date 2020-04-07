@@ -1,0 +1,20 @@
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Some description of the authorisation error",
+      "path": [
+        "somePath"
+      ],
+      "locations": [
+        {
+          "column": 5,
+          "line": 2
+        }
+      ],
+      "extensions": {
+        "code": "NOT_AUTHORISED"
+      }
+    }
+  ]
+}

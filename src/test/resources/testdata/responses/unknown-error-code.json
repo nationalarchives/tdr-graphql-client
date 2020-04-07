@@ -1,0 +1,20 @@
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Some unknown error",
+      "path": [
+        "somePath"
+      ],
+      "locations": [
+        {
+          "column": 5,
+          "line": 2
+        }
+      ],
+      "extensions": {
+        "code": "OTHER_CODE"
+      }
+    }
+  ]
+}
