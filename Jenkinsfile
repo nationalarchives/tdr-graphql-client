@@ -1,9 +1,13 @@
+library("tdr-jenkinslib")
+
+def versionBumpBranch = "version-bump-${BUILD_NUMBER}-${params.VERSION}"
+
 pipeline {
     agent {
         label "master"
     }
     parameters {
-        choice(name: "STAGE", choices: ["intg", "staging", "prod"], description: "The stage you are building the front end for")
+        choice(name: "STAGE", choices: ["intg", "staging", "prod"], description: "The stage you are deploying the graphql library to")
     }
     stages {
         stage("Deploy to sonatype") {
@@ -14,27 +18,38 @@ pipeline {
                 }
             }
             steps {
-                script {
-                    sshagent(['github-jenkins']) {
-                        sh "git push --set-upstream origin ${env.GIT_LOCAL_BRANCH}"
-                        sh 'git config --global user.email tna-digital-archiving-jenkins@nationalarchives.gov.uk'
-                        sh 'git config --global user.name tna-digital-archiving-jenkins'
-                        sh "sbt +'release with-defaults'"
-                    }
-                    slackSend color: "good", message: "*GraphQL client* :arrow_up: The GraphQL client library has been published", channel: "#tdr-releases"
+              script {
+                tdr.configureJenkinsGitUser()
+              }
 
-                }
+              sh "git checkout ${versionBumpBranch}"
+
+              sshagent(['github-jenkins']) {
+                sh "sbt +'release with-defaults'"
+              }
+
+              slackSend color: "good", message: "*GraphQL client* :arrow_up: The GraphQL client library has been published", channel: "#tdr-releases"
+
+              script {
+                tdr.pushGitHubBranch(versionBumpBranch)
+              }
             }
         }
+        stage("Create version bump pull request") {
+          agent {
+            label "master"
+          }
+          steps {
+            script {
+              tdr.createGitHubPullRequest(
+                pullRequestTitle: "Version Bump from build number ${BUILD_NUMBER}",
+                buildUrl: env.BUILD_URL,
+                repo: "tdr-graphql-client",
+                branchToMergeTo: "master",
+                branchToMerge: versionBumpBranch
+              )
+            }
+          }
+        }
     }
-}
-
-def getAccountNumberFromStage() {
-    def stageToAccountMap = [
-            "intg": env.INTG_ACCOUNT,
-            "staging": env.STAGING_ACCOUNT,
-            "prod": env.PROD_ACCOUNT
-    ]
-
-    return stageToAccountMap.get(params.STAGE)
 }
