@@ -8,46 +8,52 @@ import io.circe.parser._
 import io.circe.syntax._
 import sangria.ast.Document
 import sangria.renderer.QueryRenderer
-import sttp.client.asynchttpclient.WebSocketHandler
+
+import scala.reflect.runtime.universe._
 import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
-import sttp.client.{Response, basicRequest, _}
+import sttp.client.{Response, SttpBackend, basicRequest, _}
 import sttp.model.MediaType
 import uk.gov.nationalarchives.tdr.GraphQLClient.Error
 import uk.gov.nationalarchives.tdr.error.{HttpException, ResponseDecodingException, _}
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
+import scala.reflect.{ClassTag, classTag}
 
 class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionContext, val dataDecoder: Decoder[Data], val variablesEncoder: Encoder[Variables]) {
-
-  implicit val backend: SttpBackend[Future, Nothing, WebSocketHandler] = AsyncHttpClientFutureBackend()
 
   implicit val customConfig: Configuration = Configuration.default.withDefaults
 
   case class GraphqlData(data: Option[Data], errors: List[Error] = Nil)
 
-  def getResult(token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty): Future[GraphQlResponse[Data]] = {
+  def getResult[T[_]](token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty)(implicit backend: SttpBackend[T, Nothing, NothingT], tag: ClassTag[T[_]]): Future[GraphQlResponse[Data]] = {
     val queryJson: Json = Json.fromString(QueryRenderer.render(document, QueryRenderer.Compact))
     val variablesJson: Option[Json] = variables.map(_.asJson)
     val fields: immutable.Seq[(String, Json)] = List("query" -> queryJson) ++ variablesJson.map("variables" -> _)
-
+    "".getClass.getCanonicalName
     val body = Json.obj(fields: _*).printWith(GraphQLClient.jsonPrinter)
+    val response = basicRequest
+      .post(uri"$url")
+      .auth.bearer(token.getValue)
+      .body(body)
+      .contentType(MediaType.ApplicationJson)
+      .response(asString)
+      .send()
 
-    val response: Future[Response[Either[String, String]]] =
-      basicRequest
-        .post(uri"$url")
-        .auth.bearer(token.getValue)
-        .body(body)
-        .contentType(MediaType.ApplicationJson)
-        .response(asString)
-        .send()
-
-    response.flatMap(r => {
-      r.body match {
+    def process(response: Response[Either[String, String]]) = {
+      response.body match {
         case Right(body) => parseBody(body)
-        case Left(_) => Future.failed(new HttpException(r))
+        case Left(_) => Future.failed(new HttpException(response))
       }
-    })
+    }
+
+     //The backend type is either SttpBackend[Future, Nothing, NothingT] for async backends or SttpBackend[Identity, Nothing, NothingT] for sync ones
+     //There probably are other choices but these are the only ones we're using and we can always add another match in
+    tag match {
+      case futureTag if futureTag == classTag[Future[_]] => response.asInstanceOf[Future[Response[Either[String, String]]]].flatMap(process)
+      case identityTag if identityTag == classTag[Identity[_]] => process(response.asInstanceOf[Identity[Response[Either[String, String]]]])
+    }
   }
 
   private def parseBody(body: String): Future[GraphQlResponse[Data]] = {
