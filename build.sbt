@@ -39,8 +39,6 @@ ThisBuild / publishTo := {
 resolvers +=
   "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
-releaseVcsSign := true
-
 lazy val root = (project in file("."))
   .settings(
     name := "tdr-graphql-client",
