@@ -1,4 +1,4 @@
-library("tdr-jenkinslib")
+@Library("tdr-jenkinslib@temp-change-to-git-config") _
 
 sbtReleaseDeployJob(
   buildNumber: BUILD_NUMBER,
