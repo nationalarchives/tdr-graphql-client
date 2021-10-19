@@ -4,9 +4,8 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.matchers.should.Matchers
-import sttp.client.SttpBackend
-import sttp.client.asynchttpclient.WebSocketHandler
-import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
+import sttp.client3.SttpBackend
+import sttp.client3.asynchttpclient.future.AsyncHttpClientFutureBackend
 import sttp.model.StatusCode
 import uk.gov.nationalarchives.tdr.GraphQLClient.Location
 import uk.gov.nationalarchives.tdr.error.{HttpException, NotAuthorisedError, ResponseDecodingException, UnknownGraphQlError}
@@ -18,7 +17,7 @@ import scala.io.Source.fromResource
 
 class ErrorHandlingTest extends WireMockTest with Matchers {
 
-  implicit val backend: SttpBackend[Future, Nothing, WebSocketHandler] = AsyncHttpClientFutureBackend()
+  implicit val backend: SttpBackend[Future, Any] = AsyncHttpClientFutureBackend()
 
   def getSeriesClient = new GraphQLClient[SeriesResponseData, GetSeriesVariables](graphQlUrl)
 

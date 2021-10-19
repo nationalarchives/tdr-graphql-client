@@ -8,9 +8,8 @@ import io.circe.Printer
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.scalatest.matchers.should.Matchers
-import sttp.client.SttpBackend
-import sttp.client.asynchttpclient.WebSocketHandler
-import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
+import sttp.client3.SttpBackend
+import sttp.client3.asynchttpclient.future.AsyncHttpClientFutureBackend
 import uk.gov.nationalarchives.tdr.GraphQLClient.Error
 import uk.gov.nationalarchives.tdr.testdata.AddFileTestDocument.addFile.{AddFileInput, AddFileVariables, FileResponseData, addFileDocument}
 import uk.gov.nationalarchives.tdr.testdata.GetSeriesTestDocument.getSeries.{GetSeries, GetSeriesVariables, SeriesResponseData, getSeriesDocument}
@@ -23,7 +22,7 @@ class GraphQLClientTest extends WireMockTest with Matchers {
   def addFileClient = new GraphQLClient[FileResponseData, AddFileVariables](graphQlUrl)
 
   def await[T](result: Awaitable[T]): T = Await.result(result, Duration(5, TimeUnit.SECONDS))
-  implicit val backend: SttpBackend[Future, Nothing, WebSocketHandler] = AsyncHttpClientFutureBackend()
+  implicit val backend: SttpBackend[Future, Any] = AsyncHttpClientFutureBackend()
 
   case class GraphqlData(data: Option[SeriesResponseData], errors: List[Error] = Nil)
 
