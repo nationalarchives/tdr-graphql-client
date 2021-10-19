@@ -2,7 +2,7 @@ package uk.gov.nationalarchives.tdr.error
 
 import java.io.IOException
 
-import sttp.client.Response
+import sttp.client3.Response
 import sttp.model.StatusCode
 
 class HttpException(val response: Response[Either[String, String]])

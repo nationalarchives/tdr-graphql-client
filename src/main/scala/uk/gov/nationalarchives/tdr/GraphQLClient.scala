@@ -9,16 +9,13 @@ import io.circe.syntax._
 import sangria.ast.Document
 import sangria.renderer.QueryRenderer
 
-import scala.reflect.runtime.universe._
-import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
-import sttp.client.{Response, SttpBackend, basicRequest, _}
+import sttp.client3.{Identity, Response, SttpBackend, UriContext, asString, basicRequest}
 import sttp.model.MediaType
 import uk.gov.nationalarchives.tdr.GraphQLClient.Error
 import uk.gov.nationalarchives.tdr.error.{HttpException, ResponseDecodingException, _}
 
 import scala.collection.immutable
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.higherKinds
 import scala.reflect.{ClassTag, classTag}
 
 class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionContext, val dataDecoder: Decoder[Data], val variablesEncoder: Encoder[Variables]) {
@@ -27,7 +24,7 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
 
   case class GraphqlData(data: Option[Data], errors: List[Error] = Nil)
 
-  def getResult[T[_]](token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty)(implicit backend: SttpBackend[T, Nothing, NothingT], tag: ClassTag[T[_]]): Future[GraphQlResponse[Data]] = {
+  def getResult[T[_]](token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty)(implicit backend: SttpBackend[T, Any], tag: ClassTag[T[_]]): Future[GraphQlResponse[Data]] = {
     val queryJson: Json = Json.fromString(QueryRenderer.render(document, QueryRenderer.Compact))
     val variablesJson: Option[Json] = variables.map(_.asJson)
     val fields: immutable.Seq[(String, Json)] = List("query" -> queryJson) ++ variablesJson.map("variables" -> _)
@@ -39,7 +36,7 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
       .body(body)
       .contentType(MediaType.ApplicationJson)
       .response(asString)
-      .send()
+      .send(backend)
 
     def process(response: Response[Either[String, String]]) = {
       response.body match {
@@ -60,13 +57,12 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
     val parsedBody = parse(body).flatMap(json => json.as[GraphqlData])
     parsedBody match {
       case Left(decodingFailure) => Future.failed(new ResponseDecodingException(body, decodingFailure))
-      case Right(graphQlResponseBody) => {
+      case Right(graphQlResponseBody) =>
         val response = GraphQlResponse(
           graphQlResponseBody.data,
           graphQlResponseBody.errors.map(e => GraphQlError(e))
         )
         Future.successful(response)
-      }
     }
   }
 }
