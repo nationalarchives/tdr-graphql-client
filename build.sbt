@@ -31,10 +31,14 @@ s3acl := None
 s3sse := true
 ThisBuild / publishMavenStyle := true
 
-ThisBuild / publishTo := {
-  val prefix = if (isSnapshot.value) "snapshots" else "releases"
-  Some(s3resolver.value(s"My ${prefix} S3 bucket", s3(s"tdr-$prefix-mgmt")))
-}
+ThisBuild / publishTo := Some("GitHub nationalarchives Apache Maven Packages" at "https://maven.pkg.github.com/nationalarchives/tdr-graphql-client")
+ThisBuild / publishMavenStyle := true
+ThisBuild / credentials += Credentials(
+  "GitHub Package Registry",
+  "maven.pkg.github.com",
+  "nationalarchives",
+  System.getenv("GITHUB_TOKEN")
+)
 
 resolvers +=
   "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
