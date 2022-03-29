@@ -1,6 +1,5 @@
 name: TDR Deploy Graphql Client
 on:
-  push:
   workflow_dispatch:
 jobs:
   deploy:
