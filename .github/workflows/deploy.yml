@@ -1,4 +1,4 @@
-name: TDR Deploy Auth Utils
+name: TDR Deploy Graphql Client
 on:
   workflow_dispatch:
 jobs:
