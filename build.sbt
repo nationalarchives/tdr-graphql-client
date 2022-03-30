@@ -2,7 +2,7 @@ import Dependencies._
 import sbt.url
 import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, commitNextVersion, commitReleaseVersion, inquireVersions, pushChanges, runClean, runTest, setNextVersion, setReleaseVersion, tagRelease}
 
-ThisBuild / version := (version in ThisBuild).value
+ThisBuild / version := (ThisBuild / version).value
 ThisBuild / organization     := "uk.gov.nationalarchives"
 ThisBuild / organizationName := "National Archives"
 
@@ -25,7 +25,7 @@ ThisBuild / description := "A simple graphql client which uses auto generated sa
 ThisBuild / licenses := List("MIT" -> new URL("https://choosealicense.com/licenses/mit/"))
 ThisBuild / homepage := Some(url("https://github.com/nationalarchives/tdr-graphql-client"))
 
-scalaVersion := "2.13.3"
+scalaVersion := "2.13.8"
 
 useGpgPinentry := true
 publishTo := sonatypePublishToBundle.value
