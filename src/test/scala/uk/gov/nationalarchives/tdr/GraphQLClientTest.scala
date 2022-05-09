@@ -1,15 +1,13 @@
 package uk.gov.nationalarchives.tdr
 
 import java.util.concurrent.TimeUnit
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import io.circe.Printer
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.scalatest.matchers.should.Matchers
-import sttp.client3.SttpBackend
-import sttp.client3.asynchttpclient.future.AsyncHttpClientFutureBackend
+import sttp.client3.{HttpClientFutureBackend, SttpBackend}
 import uk.gov.nationalarchives.tdr.GraphQLClient.Error
 import uk.gov.nationalarchives.tdr.testdata.AddFileTestDocument.addFile.{AddFileInput, AddFileVariables, FileResponseData, addFileDocument}
 import uk.gov.nationalarchives.tdr.testdata.GetSeriesTestDocument.getSeries.{GetSeries, GetSeriesVariables, SeriesResponseData, getSeriesDocument}
@@ -22,7 +20,7 @@ class GraphQLClientTest extends WireMockTest with Matchers {
   def addFileClient = new GraphQLClient[FileResponseData, AddFileVariables](graphQlUrl)
 
   def await[T](result: Awaitable[T]): T = Await.result(result, Duration(5, TimeUnit.SECONDS))
-  implicit val backend: SttpBackend[Future, Any] = AsyncHttpClientFutureBackend()
+  implicit val backend: SttpBackend[Future, Any] = HttpClientFutureBackend()
 
   case class GraphqlData(data: Option[SeriesResponseData], errors: List[Error] = Nil)
 
