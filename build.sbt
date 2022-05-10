@@ -61,7 +61,6 @@ lazy val root = (project in file("."))
       circeGenericExtras,
       sttp,
       sttpCirce,
-      sttpAsyncClient,
       oauth2,
       sangria
     )
