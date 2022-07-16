@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
   lazy val circeGenericExtrasVersion = "0.14.2"
   lazy val circeVersion = "0.14.2"
-  lazy val sttpVersion = "3.6.2"
+  lazy val sttpVersion = "3.7.0"
 
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.12"
   lazy val wiremock = "com.github.tomakehurst" % "wiremock-jre8" % "2.33.2"
