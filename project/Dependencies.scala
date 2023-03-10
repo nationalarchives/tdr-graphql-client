@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
   lazy val circeGenericExtrasVersion = "0.14.3"
   lazy val circeVersion = "0.14.5"
-  lazy val sttpVersion = "3.8.12"
+  lazy val sttpVersion = "3.8.13"
 
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.15"
   lazy val wiremock = "com.github.tomakehurst" % "wiremock-jre8" % "2.35.0"
@@ -14,5 +14,5 @@ object Dependencies {
   lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % sttpVersion
   lazy val sttpCirce = "com.softwaremill.sttp.client3" %% "circe" % sttpVersion
   lazy val oauth2 = "com.nimbusds" % "oauth2-oidc-sdk" % "10.7"
-  lazy val sangria = "org.sangria-graphql" %% "sangria" % "3.5.2"
+  lazy val sangria = "org.sangria-graphql" %% "sangria" % "3.5.3"
 }
