@@ -13,6 +13,6 @@ object Dependencies {
   lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % circeGenericExtrasVersion
   lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % sttpVersion
   lazy val sttpCirce = "com.softwaremill.sttp.client3" %% "circe" % sttpVersion
-  lazy val oauth2 = "com.nimbusds" % "oauth2-oidc-sdk" % "10.7.2"
+  lazy val oauth2 = "com.nimbusds" % "oauth2-oidc-sdk" % "10.8"
   lazy val sangria = "org.sangria-graphql" %% "sangria" % "3.5.3"
 }
