@@ -14,5 +14,5 @@ object Dependencies {
   lazy val sttp = "com.softwaremill.sttp.client3" %% "core" % sttpVersion
   lazy val sttpCirce = "com.softwaremill.sttp.client3" %% "circe" % sttpVersion
   lazy val oauth2 = "com.nimbusds" % "oauth2-oidc-sdk" % "10.9.2"
-  lazy val sangria = "org.sangria-graphql" %% "sangria" % "4.0.0"
+  lazy val sangria = "org.sangria-graphql" %% "sangria" % "4.0.1"
 }
