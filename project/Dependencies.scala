@@ -5,7 +5,7 @@ object Dependencies {
   lazy val circeVersion = "0.14.8"
   lazy val sttpVersion = "3.9.7"
 
-  lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.18"
+  lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
   lazy val wiremock = "com.github.tomakehurst" % "wiremock" % "3.0.1"
   lazy val circeCore = "io.circe" %% "circe-core" % circeVersion
   lazy val circeParser = "io.circe" %% "circe-parser" % circeVersion
