@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
   lazy val circeGenericExtrasVersion = "0.14.3"
-  lazy val circeVersion = "0.14.8"
+  lazy val circeVersion = "0.14.9"
   lazy val sttpVersion = "3.9.7"
 
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
