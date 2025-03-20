@@ -8,13 +8,13 @@ import io.circe.parser._
 import io.circe.syntax._
 import sangria.ast.Document
 import sangria.renderer.QueryRenderer
-
 import sttp.client3.{Identity, Response, SttpBackend, UriContext, asString, basicRequest}
 import sttp.model.MediaType
 import uk.gov.nationalarchives.tdr.GraphQLClient.Error
 import uk.gov.nationalarchives.tdr.error.{HttpException, ResponseDecodingException, _}
 
 import scala.collection.immutable
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 
@@ -32,6 +32,7 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
     val body = Json.obj(fields: _*).printWith(GraphQLClient.jsonPrinter)
     val response = basicRequest
       .post(uri"$url")
+      .readTimeout(180.seconds)
       .auth.bearer(token.getValue)
       .body(body)
       .contentType(MediaType.ApplicationJson)
