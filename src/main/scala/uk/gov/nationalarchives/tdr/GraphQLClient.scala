@@ -8,13 +8,13 @@ import io.circe.parser._
 import io.circe.syntax._
 import sangria.ast.Document
 import sangria.renderer.QueryRenderer
-
 import sttp.client3.{Identity, Response, SttpBackend, UriContext, asString, basicRequest}
 import sttp.model.MediaType
 import uk.gov.nationalarchives.tdr.GraphQLClient.Error
 import uk.gov.nationalarchives.tdr.error.{HttpException, ResponseDecodingException, _}
 
 import scala.collection.immutable
+import scala.concurrent.duration.{Duration, DurationInt}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.{ClassTag, classTag}
 
@@ -24,7 +24,7 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
 
   case class GraphqlData(data: Option[Data], errors: List[Error] = Nil)
 
-  def getResult[T[_]](token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty)(implicit backend: SttpBackend[T, Any], tag: ClassTag[T[_]]): Future[GraphQlResponse[Data]] = {
+  def getResult[T[_]](token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty, readTimeout: Duration = 60.seconds)(implicit backend: SttpBackend[T, Any], tag: ClassTag[T[_]]): Future[GraphQlResponse[Data]] = {
     val queryJson: Json = Json.fromString(QueryRenderer.render(document, QueryRenderer.Compact))
     val variablesJson: Option[Json] = variables.map(_.asJson)
     val fields: immutable.Seq[(String, Json)] = List("query" -> queryJson) ++ variablesJson.map("variables" -> _)
@@ -32,6 +32,7 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
     val body = Json.obj(fields: _*).printWith(GraphQLClient.jsonPrinter)
     val response = basicRequest
       .post(uri"$url")
+      .readTimeout(readTimeout)
       .auth.bearer(token.getValue)
       .body(body)
       .contentType(MediaType.ApplicationJson)
@@ -45,8 +46,8 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
       }
     }
 
-     //The backend type is either SttpBackend[Future, Nothing, NothingT] for async backends or SttpBackend[Identity, Nothing, NothingT] for sync ones
-     //There probably are other choices but these are the only ones we're using and we can always add another match in
+    //The backend type is either SttpBackend[Future, Nothing, NothingT] for async backends or SttpBackend[Identity, Nothing, NothingT] for sync ones
+    //There probably are other choices but these are the only ones we're using and we can always add another match in
     tag match {
       case futureTag if futureTag == classTag[Future[_]] => response.asInstanceOf[Future[Response[Either[String, String]]]].flatMap(process)
       case identityTag if identityTag == classTag[Identity[_]] => process(response.asInstanceOf[Identity[Response[Either[String, String]]]])
