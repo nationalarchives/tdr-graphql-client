@@ -24,7 +24,11 @@ class GraphQLClient[Data, Variables](url: String)(implicit val ec: ExecutionCont
 
   case class GraphqlData(data: Option[Data], errors: List[Error] = Nil)
 
-  def getResult[T[_]](token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty, readTimeout: Duration = 60.seconds)(implicit backend: SttpBackend[T, Any], tag: ClassTag[T[_]]): Future[GraphQlResponse[Data]] = {
+  def getResult[T[_]](token: BearerAccessToken, document: Document, variables: Option[Variables] = Option.empty)(implicit backend: SttpBackend[T, Any], tag: ClassTag[T[_]]): Future[GraphQlResponse[Data]] = {
+    getResult(token, document, variables, 60.seconds)
+  }
+
+  def getResult[T[_]](token: BearerAccessToken, document: Document, variables: Option[Variables], readTimeout: Duration)(implicit backend: SttpBackend[T, Any], tag: ClassTag[T[_]]): Future[GraphQlResponse[Data]] = {
     val queryJson: Json = Json.fromString(QueryRenderer.render(document, QueryRenderer.Compact))
     val variablesJson: Option[Json] = variables.map(_.asJson)
     val fields: immutable.Seq[(String, Json)] = List("query" -> queryJson) ++ variablesJson.map("variables" -> _)
