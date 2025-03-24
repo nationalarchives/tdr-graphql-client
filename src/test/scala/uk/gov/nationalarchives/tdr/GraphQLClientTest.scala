@@ -12,7 +12,7 @@ import uk.gov.nationalarchives.tdr.GraphQLClient.Error
 import uk.gov.nationalarchives.tdr.testdata.AddFileTestDocument.addFile.{AddFileInput, AddFileVariables, FileResponseData, addFileDocument}
 import uk.gov.nationalarchives.tdr.testdata.GetSeriesTestDocument.getSeries.{GetSeries, GetSeriesVariables, SeriesResponseData, getSeriesDocument}
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, DurationInt}
 import scala.concurrent.{Await, Awaitable, Future}
 
 class GraphQLClientTest extends WireMockTest with Matchers {
@@ -25,14 +25,14 @@ class GraphQLClientTest extends WireMockTest with Matchers {
   case class GraphqlData(data: Option[SeriesResponseData], errors: List[Error] = Nil)
 
   "The getResult method " should "return the correct result" in {
-    val data= GraphqlData(Some(SeriesResponseData(List(GetSeries(1L, Some(2L),Some("foo"), Some("code"), Some("bar"))))))
+    val data = GraphqlData(Some(SeriesResponseData(List(GetSeries(1L, Some(2L), Some("foo"), Some("code"), Some("bar"))))))
 
     val dataString: String = data.asJson.printWith(Printer(dropNullValues = false, ""))
 
     wiremockServer.stubFor(post(urlEqualTo("/graphql"))
       .willReturn(okJson(dataString)))
 
-    val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty)
+    val result = getSeriesClient.getResult(new BearerAccessToken("token"), getSeriesDocument, Option.empty, 30.seconds)
     val resultData = await(result)
     assert(resultData.data.isDefined)
     assert(resultData.data.get.getSeries.nonEmpty)
@@ -40,7 +40,7 @@ class GraphQLClientTest extends WireMockTest with Matchers {
   }
 
   "The getResult method " should "return an error from the api" in {
-    val data= GraphqlData(Option.empty, List(Error("error", List(), List(), None)))
+    val data = GraphqlData(Option.empty, List(Error("error", List(), List(), None)))
 
     val dataString: String = data.asJson.printWith(Printer(dropNullValues = false, ""))
 
