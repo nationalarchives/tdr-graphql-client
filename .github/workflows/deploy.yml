@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 jobs:
   deploy:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/sbt_release.yml@1c56dd1e838340ab53c7dc55dbbb974a062a6ae9 # v0.0.6
+    uses: nationalarchives/tdr-github-actions/.github/workflows/sbt_release.yml@fa53af529582c850a4575b9af2f91e441166c68d # v0.0.7
     with:
       library-name: "Graphql Client"
     secrets:
