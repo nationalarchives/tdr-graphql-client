@@ -50,6 +50,13 @@ releaseProcess := Seq[ReleaseStep](
   pushChanges
 )
 
+ThisBuild / dependencyOverrides ++= Seq(
+  "org.bouncycastle" % "bcprov-jdk18on" % "1.84",
+  "org.bouncycastle" % "bcpkix-jdk18on" % "1.84",
+  "org.bouncycastle" % "bcutil-jdk18on" % "1.84",
+  "org.bouncycastle" % "bcpg-jdk18on"   % "1.84"
+)
+
 lazy val root = (project in file("."))
   .settings(
     name := "tdr-graphql-client",
