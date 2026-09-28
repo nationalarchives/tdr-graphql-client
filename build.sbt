@@ -25,7 +25,7 @@ ThisBuild / description := "A simple graphql client which uses auto generated sa
 ThisBuild / licenses := List("MIT" -> url("https://spdx.org/licenses/MIT.html"))
 ThisBuild / homepage := Some(url("https://github.com/nationalarchives/tdr-graphql-client"))
 
-scalaVersion := "2.13.18"
+scalaVersion := "3.9.0"
 
 useGpgPinentry := true
 publishTo := {
