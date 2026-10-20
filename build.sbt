@@ -22,7 +22,7 @@ developers := List(
 )
 
 ThisBuild / description := "A simple graphql client which uses auto generated sangria classes"
-ThisBuild / licenses := List("MIT" -> new URL("https://choosealicense.com/licenses/mit/"))
+ThisBuild / licenses := List("MIT" -> url("https://spdx.org/licenses/MIT.html"))
 ThisBuild / homepage := Some(url("https://github.com/nationalarchives/tdr-graphql-client"))
 
 scalaVersion := "2.13.18"
