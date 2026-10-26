@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/sbt_release.yml@f4d7086babd2c5156dd483d445e4500a603d8dc4 # v0.0.42
+    uses: nationalarchives/tdr-github-actions/.github/workflows/sbt_release.yml@51a06bbc08eb65018238b144d0ad8bfd707a8ffa # v0.0.50
     with:
       library-name: "Graphql Client"
     secrets:
